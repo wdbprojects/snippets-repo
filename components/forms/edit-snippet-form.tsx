@@ -35,16 +35,16 @@ const EditSnippetForm = ({ snippet, id }: EditPropSnippet) => {
       code: "",
     },
   });
-  const { handleSubmit, control, reset, setValue } = form;
+  const { /* handleSubmit, */ control, setValue } = form;
   const { title, code } = snippet;
 
-  const onSubmit = async (values: z.infer<typeof createSnippetSchema>) => {
-    const formData = new FormData();
-    formData.append("title", values.title);
-    formData.append("code", codeState);
-    await updateSnippetAction(id, formData);
-    console.log(formData);
-  };
+  // const onSubmit = async (values: z.infer<typeof createSnippetSchema>) => {
+  //   const formData = new FormData();
+  //   formData.append("title", values.title);
+  //   formData.append("code", codeState);
+  //   await updateSnippetAction(id, formData);
+  //   console.log(formData);
+  // };
 
   const handleEditorChange = (value: string = "") => {
     setCodeState(value);
@@ -55,11 +55,18 @@ const EditSnippetForm = ({ snippet, id }: EditPropSnippet) => {
     setValue("code", code);
   }, []);
 
+  //const handleFormSubmit = updateSnippetAction2.bind(null, id, codeState);
+
+  const handleFormSubmit = async (formData: FormData) => {
+    formData.append("code", codeState);
+    await updateSnippetAction(id, formData);
+  };
+
   return (
     <Form {...form}>
       <form
-        onSubmit={handleSubmit(onSubmit)}
-        //action={createSnippetAction}
+        //onSubmit={handleSubmit(onSubmit)}
+        action={handleFormSubmit}
         className="space-y-8 min-w-[400px] max-w-[550px] mt-8 border p-4 rounded-sm shadow-sm mx-auto"
       >
         <FormField

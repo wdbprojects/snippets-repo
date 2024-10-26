@@ -1,4 +1,6 @@
 "use client";
+
+import { startTransition, useActionState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -15,8 +17,14 @@ import { Textarea } from "../ui/textarea";
 import { z } from "zod";
 import { createSnippetSchema } from "@/zod/snippets-schemas";
 import { createSnippetAction } from "@/app/actions/snippets-actions";
+import { toast } from "sonner";
 
 const CreateSnippet = () => {
+  const [formState, formAction] = useActionState(createSnippetAction, {
+    message: "",
+    issues: [],
+  });
+
   const form = useForm<z.infer<typeof createSnippetSchema>>({
     resolver: zodResolver(createSnippetSchema),
     defaultValues: {
@@ -26,26 +34,52 @@ const CreateSnippet = () => {
   });
   const { handleSubmit, control, reset } = form;
 
-  const onSubmit = async (values: z.infer<typeof createSnippetSchema>) => {
-    const formData = new FormData();
-    formData.append("title", values.title);
-    formData.append("code", values.code);
-    await createSnippetAction(formData);
-  };
+  // const onSubmit = async (values: z.infer<typeof createSnippetSchema>) => {
+  //   const formData = new FormData();
+  //   formData.append("title", values.title);
+  //   formData.append("code", values.code);
+  //   await createSnippetAction(formData);
+  // };
+
+  // const handleCreateAction = async (formData: FormData) => {
+  //   const newSnippet = await formAction(formData);
+  //   console.log(newSnippet);
+  // };
+
+  useEffect(() => {
+    if (formState.issues) {
+      formState.issues.forEach((issue) => {
+        toast.error(issue);
+      });
+    }
+    if (formState.message) {
+      toast.error(formState.message);
+    }
+  }, [formState]);
+
+  const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <Form {...form}>
       <form
-        onSubmit={handleSubmit(onSubmit)}
-        //action={createSnippetAction}
-        className="space-y-8 min-w-[400px] mt-8 border p-4 rounded-sm shadow-sm"
+        ref={formRef}
+        action={formAction}
+        className="min-w-[400px] mt-8 border p-4 rounded-sm shadow-sm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit(() => {
+            startTransition(() => {
+              formAction(new FormData(formRef.current!));
+            });
+          })(event);
+        }}
       >
         <FormField
           control={control}
           name="title"
           render={({ field }) => {
             return (
-              <FormItem>
+              <FormItem className="mb-4">
                 <FormLabel>Title</FormLabel>
                 <FormControl>
                   <Input placeholder="Snippet title" {...field} />
@@ -60,7 +94,7 @@ const CreateSnippet = () => {
           name="code"
           render={({ field }) => {
             return (
-              <FormItem>
+              <FormItem className="mb-8">
                 <FormLabel>Code Snippet</FormLabel>
                 <FormControl>
                   <Textarea
@@ -73,6 +107,7 @@ const CreateSnippet = () => {
             );
           }}
         />
+
         <div className="mt-4 flex justify-between align-center w-full gap-4">
           <Button
             variant="secondary"

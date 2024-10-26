@@ -1,26 +1,34 @@
+import { deleteSnippetAction } from "@/app/actions/snippets-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-interface IPageProps {
+interface SnippetShowPageProps {
   params: {
     id: string;
   };
 }
 
-const SnippetDetails = async ({ params }: IPageProps) => {
+const SnippetDetails = async ({ params }: SnippetShowPageProps) => {
   /* await new Promise((arg) => {
     return setTimeout(arg, 3000);
   }); */
 
+  const { id } = await params;
+
   const snippet = await db.snippet.findUnique({
-    where: { id: Number(params.id) },
+    where: { id: parseInt(id) },
   });
 
   if (!snippet) return notFound();
   const { title, code } = snippet;
+
+  const handleDeleteSnippet = async () => {
+    "use server";
+    await deleteSnippetAction(Number(id));
+  };
 
   return (
     <div className="w-full">
@@ -30,9 +38,13 @@ const SnippetDetails = async ({ params }: IPageProps) => {
         </Link>
         <div className="flex gap-4 items-center">
           <Button asChild variant="outline">
-            <Link href={`/snippets/${params.id}/edit`}>Edit</Link>
+            <Link href={`/snippets/${id}/edit`}>Edit</Link>
           </Button>
-          <Button variant="destructive">Delete</Button>
+          <form action={handleDeleteSnippet}>
+            <Button variant="destructive" type="submit">
+              Delete
+            </Button>
+          </form>
         </div>
       </div>
 
@@ -50,3 +62,11 @@ const SnippetDetails = async ({ params }: IPageProps) => {
   );
 };
 export default SnippetDetails;
+
+/* ONLY FOR PRODUCTION: GENERATE CACHING */
+export async function generateStaticParams() {
+  const snippets = await db.snippet.findMany();
+  return snippets.map((item) => {
+    return { id: item.id.toString() };
+  });
+}

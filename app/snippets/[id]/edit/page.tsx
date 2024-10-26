@@ -4,21 +4,22 @@ import { db } from "@/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-interface IPageProps {
+interface SnippetEditPageProps {
   params: {
     id: string;
   };
 }
 
-const SnippetDetails = async ({ params }: IPageProps) => {
-  const id = Number(params.id);
-
+export default async function SnippetEditPage({
+  params,
+}: SnippetEditPageProps) {
+  const { id } = await params;
   /* await new Promise((arg) => {
     return setTimeout(arg, 3000);
   }); */
 
-  const snippet = await db.snippet.findUnique({
-    where: { id: id },
+  const snippet = await db.snippet.findFirst({
+    where: { id: parseInt(id) },
   });
 
   if (!snippet) return notFound();
@@ -39,9 +40,7 @@ const SnippetDetails = async ({ params }: IPageProps) => {
           </Link>
         </div>
       </div>
-
-      <EditSnippetForm snippet={snippet} id={id} />
+      <EditSnippetForm snippet={snippet} id={parseInt(id)} />
     </div>
   );
-};
-export default SnippetDetails;
+}
